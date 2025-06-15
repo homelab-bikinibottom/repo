@@ -93,7 +93,7 @@ function getDirectory( $path = '.', $level = 0 ){
 }
 
 
-getDirectory( "." );
+getDirectory( "/mnt" );
 // Get the current directory
 
 ?>
