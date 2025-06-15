@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  web:
+    image: nginx:otel
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-H", "X-eamca-healthcheck:true", "http://localhost"]
+      interval: 1m
+      start_period: 3s
+      timeout: 30s
+      retries: 3
+    environment:
+      - STACK_NAME
+    volumes:
+      - /root/projects/docker-php/nginx/templates:/etc/nginx/templates:ro
+      - /root/projects/docker-php/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /root/projects/$STACK_NAME:/var/www/html
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.$STACK_NAME-eamca.rule=Host(`$STACK_NAME.eamca.com`)
+      - traefik.http.routers.$STACK_NAME-eamca.entrypoints=http
+      - traefik.docker.network=traefik
+    networks:
+      - default
+      - traefik
+      - eamcacom
+
+  app:
+    image: php:fpm-alpine
+    restart: unless-stopped
+    environment:
+      - DB_HOST
+      - DB_USERNAME
+      - DB_PASSWORD
+      - DB_NAME
+    volumes:
+      - /root/projects/$STACK_NAME:/var/www/html
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    networks:
+      - default
+      - database
+
+networks:
+  traefik:
+    external: true
+  eamcacom:
+    external: true
+  database:
+    external: true
